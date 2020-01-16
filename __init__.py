@@ -638,27 +638,12 @@ class NodeRedFactory(WebSocketServerFactory):
             # TODO receive files ?
             pass
         else:
-            #message = Message('speak', data={'utterance': 'Hello World'})
-            #message = Message.deserialize(payload.decode('utf8'))
-            #message = Message.deserialize(json.loads(payload.decode('utf8')))
-            #print(payload)
-            # add context for this message
-            #message.context["source"] = client.peer
-            #message.context["platform"] = "node_red"
-            #message.context["ident"] = client.name + ":" + client.peer
             payload = json.loads(payload.decode('utf8'))
-            # This would be the place to check for blacklisted
-            # messages/skills/intents per node instance
 
-            # we can accept any kind of message for other purposes
-            #message.context["client_name"] = "node_red"
-            #message.context["destinatary"] = client.peer
-            
             if payload["type"] == "node_red.answer":
                 # node is answering us, do not use target, we want tts to
                 # execute
                 message = Message('speak', data=payload["data"])
-                #message.type = "speak"
                 message.context["source"] = client.peer
                 message.context["platform"] = "node_red"
                 message.context["ident"] = client.name + ":" + client.peer
@@ -679,7 +664,6 @@ class NodeRedFactory(WebSocketServerFactory):
                 message.context["ident"] = client.name + ":" + client.peer
                 message.context["client_name"] = "node_red"
                 message.context["destinatary"] = client.peer
-                #message.type = "recognizer_loop:utterance"
                 # we do not want tts to execute, unless explicitly requested
                 if "target" not in message.context:
                     message.context["target"] = "node_red"
