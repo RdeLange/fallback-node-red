@@ -638,23 +638,31 @@ class NodeRedFactory(WebSocketServerFactory):
             # TODO receive files ?
             pass
         else:
-            message = Message.deserialize(payload.decode('utf8'))
+            #message = Message('speak', data={'utterance': 'Hello World'})
+            #message = Message.deserialize(payload.decode('utf8'))
             #message = Message.deserialize(json.loads(payload.decode('utf8')))
+            #print(payload)
             # add context for this message
-            message.context["source"] = client.peer
-            message.context["platform"] = "node_red"
-            message.context["ident"] = client.name + ":" + client.peer
-
+            #message.context["source"] = client.peer
+            #message.context["platform"] = "node_red"
+            #message.context["ident"] = client.name + ":" + client.peer
+            payload = json.loads(payload.decode('utf8'))
             # This would be the place to check for blacklisted
             # messages/skills/intents per node instance
 
             # we can accept any kind of message for other purposes
-            message.context["client_name"] = "node_red"
-            message.context["destinatary"] = client.peer
-            if message.type == "node_red.answer":
+            #message.context["client_name"] = "node_red"
+            #message.context["destinatary"] = client.peer
+            
+            if payload["type"] == "node_red.answer":
                 # node is answering us, do not use target, we want tts to
                 # execute
-                message.type = "speak"
+                message = Message('speak', data=payload["data"])
+                #message.type = "speak"
+                message.context["source"] = client.peer
+                message.context["platform"] = "node_red"
+                message.context["ident"] = client.name + ":" + client.peer
+                message.context["client_name"] = "node_red"
                 message.context["destinatary"] = "node_fallback"
                 # node is answering its own question in a fallback
                 if self.query:
@@ -662,24 +670,30 @@ class NodeRedFactory(WebSocketServerFactory):
                     self.query = False
                     # forward back to node
                     self.broadcast_message(message)
-            elif message.type == "node_red.query":
+            elif payload["type"] == "node_red.query":
                 # node is asking us something
                 self.query = True
-                message.type = "recognizer_loop:utterance"
+                message = Message("recognizer_loop:utterance", data=payload["data"])
+                message.context["source"] = client.peer
+                message.context["platform"] = "node_red"
+                message.context["ident"] = client.name + ":" + client.peer
+                message.context["client_name"] = "node_red"
+                message.context["destinatary"] = client.peer
+                #message.type = "recognizer_loop:utterance"
                 # we do not want tts to execute, unless explicitly requested
                 if "target" not in message.context:
                     message.context["target"] = "node_red"
-            elif message.type == "node_red.intent_failure":
+            elif payload["type"] == "node_red.intent_failure":
                 # node red failed
                 LOG.info("node red intent failure")
-            elif message.type == "node_red.converse.deactivate":
+            elif payload["type"] == "node_red.converse.deactivate":
                 LOG.info("node red converse deactivate")
-            elif message.type == "node_red.converse.activate":
+            elif payload["type"] == "node_red.converse.activate":
                 LOG.info("node red converse activate")
-            elif self.settings["safe_mode"] and message.type not in \
+            elif self.settings["safe_mode"] and payload["type"] not in \
                     self.settings["message_whitelist"]:
                 LOG.warning("node red sent an unexpected message type, "
-                            "it was suppressed: " + message.type)
+                            "it was suppressed: " + payload["type"])
                 return
             # send client message to internal mycroft bus
             self.bus.emit(message)
