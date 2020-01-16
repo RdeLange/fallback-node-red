@@ -685,10 +685,13 @@ class NodeRedFactory(WebSocketServerFactory):
                     message.context["target"] = "node_red"
             elif payload["type"] == "node_red.intent_failure":
                 # node red failed
+                message = Message("node_red.intent_failure", data={},context={})
                 LOG.info("node red intent failure")
             elif payload["type"] == "node_red.converse.deactivate":
+                message = Message("node_red.converse.deactivate", data={},context={})
                 LOG.info("node red converse deactivate")
             elif payload["type"] == "node_red.converse.activate":
+                message = Message("node_red.converse.activate", data={},context={})
                 LOG.info("node red converse activate")
             elif self.settings["safe_mode"] and payload["type"] not in \
                     self.settings["message_whitelist"]:
